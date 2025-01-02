@@ -1,16 +1,18 @@
 "use client"
-import React,{ ChangeEvent, useRef } from 'react'
+import React,{ useState, ChangeEvent, useRef } from 'react'
 import Results from './Results';
 import QueryForm from './queryForm'
 import GenerateForm from './generateForm'
+import Toggle from './Toggle'
+import styles from "../Home.module.css"
 
 const Landing: React.FC = () => {
-  const [isSql, setIsSql] = React.useState(true);
-  const [query, setQuery] = React.useState("");
-  const [result, setResult] = React.useState<any[]>([]);
-  const [hasResult, setHasResult] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [isSql, setIsSql] = useState<boolean>(true);
+  const [query, setQuery] = useState<string>("");
+  const [result, setResult] = useState<any[]>([]);
+  const [hasResult, setHasResult] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   var pageColor = "border-gray-200";
   var adjust = "";
@@ -74,10 +76,8 @@ const Landing: React.FC = () => {
   let formElement = null;
 
   if (isSql) {
-    pageColor = "bg-gray-300"
-    formElement =  (<QueryForm query={query} setQuery={setQuery} onSubmit={onSubmit} isLoading={isLoading} error={error} />);
+    formElement = (<QueryForm query={query} setQuery={setQuery} onSubmit={onSubmit} isLoading={isLoading} error={error} />);
   } else{
-    //pageColor = "bg-gray-600 min-h-screen w-screen"
     formElement = (<GenerateForm query={query} setQuery={setQuery} onGenerate={onGenerate} isLoading={isLoading} error={error} />);
   } 
 
@@ -88,42 +88,16 @@ const Landing: React.FC = () => {
   
   return (
     <>
-    <div>
-    {resultsElement}
-    <p className="text-xl max-w-lg m-auto p-2">Type in query:</p>
+    <div className = {styles.parent}>
+    <div className = {styles.child}>
+    <p className="text-xl max-w-lg p-2">Type in query:</p>
     {formElement} 
-
-    <div className="max-w-lg m-auto p-2 w-full">
-    <label className="inline-flex items-center mb-5 cursor-pointer">
-    <input
-      type="checkbox"
-      checked={isSql}
-      onChange={handleToggle}
-      className="sr-only peer"
-    />
-    <div
-      className={`
-        relative w-9 h-5 
-        bg-gray-200 
-        peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 
-        dark:peer-focus:ring-blue-800 
-        rounded-full 
-        peer 
-        dark:bg-gray-300 
-        after:content-[''] after:absolute after:top-[2px] after:end-[2px] 
-        after:bg-white after:border-gray-300 after:border after:rounded-full 
-        after:h-4 after:w-4 after:transition-all 
-        dark:border-gray-600 
-        peer-checked:after:start-[2px] 
-        peer-checked:after:end-auto 
-        peer-checked:bg-gray-600
-      `}
-    ></div>
-    <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
-      Natural Language Mode
-    </span>
-    </label>
+    <Toggle isSql={isSql} handleToggle={handleToggle} />
     </div>
+    <div className = {styles.child}>
+    {resultsElement}
+    </div>
+    
     </div>
     </>
   );

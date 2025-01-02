@@ -1,7 +1,7 @@
 import React from 'react'
 import styles from "../Home.module.css"
-function Table({data}: { data: any[] }) {
 
+function Table({data}: { data: any[] }) {
     const columns = Object.keys(data[0]); 
     return (
       <table className={styles.table}>

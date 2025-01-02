@@ -1,17 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react';
-import type { NextPage } from 'next';
 
-const ScrollableOptions: NextPage = () => {
+const ScrollableOptions: React.FC = () => {
   const [options, setOptions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
-  
   const [optionInformation, setOptionInformation] = useState<string | null>(null);
-  
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  
   const [infoCache, setInfoCache] = useState<{ [key: string]: string }>({});
   
   useEffect(() => {
@@ -30,10 +25,6 @@ const ScrollableOptions: NextPage = () => {
 
     fetchOptions();
   }, []);
-
-  const handleClick = (option: string) => {
-    alert(`You clicked on: ${option}`);
-  };
 
   const handleMouseEnter = async (option: string) => {
     setHoveredOption(option);
@@ -74,7 +65,7 @@ const ScrollableOptions: NextPage = () => {
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
-      <h1 className="text-xl max-w-lg p-2">Publicly Available Databases (most likely)</h1>
+      <h1 className="text-xl max-w-lg p-2">Publicly Available Databases</h1>
 
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
 
@@ -95,7 +86,6 @@ const ScrollableOptions: NextPage = () => {
               backgroundColor: hoveredOption === option ? '#f0f8ff' : 'transparent',
               transition: 'background-color 0.3s',
             }}
-            onClick={() => handleClick(option)}
             onMouseEnter={() => handleMouseEnter(option)}
             onMouseLeave={handleMouseLeave}
           >
