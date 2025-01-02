@@ -1,6 +1,6 @@
-import Landing from "./components/Landing"
+import Landing from "./components/searchBar/Landing"
 import ScrollableOptions from "./components/ScrollableOptions"
-import Styles from "./Home.module.css"
+import Styles from "./components/Home.module.css"
 import './globals.css'
 
 import React,{ useState } from 'react'
