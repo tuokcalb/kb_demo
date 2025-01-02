@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
-# Needs to be split into AI functions and Query functions
-from main_script import query_database, show_tables, ask_gpt, get_table_information
 from fastapi.middleware.cors import CORSMiddleware
+
+from query_modules import query_database, show_tables
+from ai_modules import ask_gpt, get_table_information
 
 app = FastAPI()
 
