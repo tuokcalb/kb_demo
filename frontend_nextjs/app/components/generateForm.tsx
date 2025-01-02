@@ -16,7 +16,6 @@ const GenerateForm: React.FC<FormProps> = (props) => {
               className = "bg-gray-100 rounded-md p-2 w-full"
               value={props.query}
               rows={1}
-              onInput={props.handleInput}
               onChange={(e) => props.setQuery(e.currentTarget.value)}
               style={{ color: 'black' }}
             />
