@@ -11,7 +11,7 @@ def query_database(query):
         results_df = query_job.result().to_dataframe()
         results_df.to_excel("output.xlsx") 
 
-        return { 'success': True, 'message': results_df.to_dict(orient='records') }
+        return results_df.to_dict(orient='records') 
    
     except Exception as e:
 

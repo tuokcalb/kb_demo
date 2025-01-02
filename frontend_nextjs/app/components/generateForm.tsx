@@ -1,0 +1,40 @@
+import styles from "../styles/Home.module.css"
+
+interface FormProps {
+    query: any;
+    setQuery: any;
+    onGenerate: any;
+    isLoading: any; 
+    error: any;
+}
+const GenerateForm: React.FC<FormProps> = (props) => {
+  return (
+    <div className="max-w-lg m-auto p-2 w-full">
+        <div className="bg-gray-200 p-6 rounded-md text-black">
+          <div>
+            <textarea
+              className = "bg-gray-100 rounded-md p-2 w-full"
+              value={props.query}
+              rows={1}
+              onInput={props.handleInput}
+              onChange={(e) => props.setQuery(e.currentTarget.value)}
+              style={{ color: 'black' }}
+            />
+          </div>
+        </div>
+        <button className="bg-gray-400 rounded-sm px-3 flex-1" onClick={props.onGenerate} disabled={props.isLoading}>Generate</button>
+          {props.error && (
+            <div style={{ color: 'red', marginTop: '1rem' }}>
+              {props.error}
+            </div>
+          )}
+          {props.isLoading && (
+            <div style={{ color: 'black', marginTop: '1rem' }}>
+              {'Loading...'}
+            </div>
+          )}
+      </div>
+    );
+};
+
+export default GenerateForm;

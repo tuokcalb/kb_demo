@@ -34,7 +34,6 @@ async def download_csv_api():
     )
 
 # From my understanding I can stream the response from here 
-# but I don't see where I can from google cloud
 @app.get("/show_tables_api", response_model=list)
 async def show_tables_api():
     tables = show_tables()
