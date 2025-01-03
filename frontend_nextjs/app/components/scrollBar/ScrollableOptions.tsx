@@ -1,24 +1,27 @@
 'use client';
-import { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useCallback } from 'react';
+import styles from './ScrollableOptions.module.css';
 
 interface ScrollableOptionsProps {
-  setIsSelected: (isSelected: boolean) => void; // Corrected to be a function
+  setIsSelected: (isSelected: boolean) => void;
 }
 
-const ScrollableOptions: React.FC<ScrollableOptionsProps> = ({ setIsSelected }) => {
+interface InfoCache {
+  [key: string]: string;
+}
+
+// Custom hook to fetch options
+const useFetchOptions = (url: string) => {
   const [options, setOptions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [hoveredOption, setHoveredOption] = useState<string | null>(null);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [optionInformation, setOptionInformation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [infoCache, setInfoCache] = useState<{ [key: string]: string }>({});
 
-  // Fetch options on component mount
   useEffect(() => {
     const fetchOptions = async () => {
+      setIsLoading(true);
       try {
-        const res = await fetch('http://localhost:8000/show_tables_api');
+        const res = await fetch(url);
         if (!res.ok) {
           throw new Error(`Failed to fetch, status: ${res.status}`);
         }
@@ -26,108 +29,108 @@ const ScrollableOptions: React.FC<ScrollableOptionsProps> = ({ setIsSelected }) 
         setOptions(data);
       } catch (error: any) {
         setError(error.message);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchOptions();
-  }, []);
+  }, [url]);
 
-  // Fetch information based on selected or hovered option
+  return { options, error, isLoading };
+};
+
+// Custom hook to fetch information based on option
+const useFetchInformation = (
+  option: string | null,
+  cache: InfoCache,
+  setCache: React.Dispatch<React.SetStateAction<InfoCache>>
+) => {
+  const [info, setInfo] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   useEffect(() => {
-    const fetchInformation = async (option: string) => {
-      if (infoCache[option]) {
-        setOptionInformation(infoCache[option]);
-        return;
-      }
+    if (!option) {
+      setInfo(null);
+      return;
+    }
 
+    if (cache[option]) {
+      setInfo(cache[option]);
+      return;
+    }
+
+    const fetchInfo = async () => {
       setIsLoading(true);
       try {
         const res = await fetch(`http://localhost:8000/get_table_information_api?database=${option}`);
         if (!res.ok) {
           throw new Error(`Failed to fetch information, status: ${res.status}`);
         }
-
         const description = await res.json();
-
-        setOptionInformation(description);
-
-        setInfoCache(prevCache => ({
-          ...prevCache,
-          [option]: description,
-        }));
+        setInfo(description);
+        setCache(prev => ({ ...prev, [option]: description }));
       } catch (error: any) {
         setError(error.message);
-        setOptionInformation('Failed to load information.');
+        setInfo('Failed to load information.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (selectedOption) {
-      fetchInformation(selectedOption);
-    } else if (hoveredOption) {
-      fetchInformation(hoveredOption);
-    } else {
-      setOptionInformation(null);
-    }
-  }, [hoveredOption, selectedOption, infoCache]);
+    fetchInfo();
+  }, [option, cache, setCache]);
 
-  // Handle mouse enter
-  const handleMouseEnter = (option: string) => {
+  return { info, error, isLoading };
+};
+
+const ScrollableOptions: React.FC<ScrollableOptionsProps> = ({ setIsSelected }) => {
+  const { options, error: optionsError, isLoading: optionsLoading } = useFetchOptions('http://localhost:8000/show_tables_api');
+  const [hoveredOption, setHoveredOption] = useState<string | null>(null);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [infoCache, setInfoCache] = useState<InfoCache>({});
+  
+  const currentOption = selectedOption || hoveredOption;
+  const { info: optionInformation, error: infoError, isLoading: infoLoading } = useFetchInformation(currentOption, infoCache, setInfoCache);
+
+  const handleMouseEnter = useCallback((option: string) => {
     if (!selectedOption) {
       setHoveredOption(option);
     }
-  };
+  }, [selectedOption]);
 
-  // Handle mouse leave
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     if (!selectedOption) {
       setHoveredOption(null);
-      setOptionInformation(null);
     }
-  };
+  }, [selectedOption]);
 
-  // Handle click (select/deselect)
-  const handleClick = (option: string) => {
+  const handleClick = useCallback((option: string) => {
     if (selectedOption === option) {
-      // Deselect if already selected
       setSelectedOption(null);
       setIsSelected(false);
       console.log(`Deselected option: ${option}`);
     } else {
-      // Select new option
       setSelectedOption(option);
       setIsSelected(true);
       console.log(`Selected option: ${option}`);
     }
-  };
+  }, [selectedOption, setIsSelected]);
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
-      <h1 className="text-xl max-w-lg p-2">Publicly Available Databases</h1>
+    <div className={styles.container}>
+      <h1 className={styles.header}>Publicly Available Databases</h1>
 
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+      {optionsError && <p className={styles.error}>Error: {optionsError}</p>}
 
-      <div
-        style={{
-          color: 'black',
-          width: '300px',
-          height: '200px',
-          overflowY: 'auto',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-        }}
-      >
+      <div className={styles.optionsList}>
         {options.map((option, idx) => (
           <div
             key={idx}
-            style={{
-              padding: '0.5rem',
-              cursor: 'pointer',
-              backgroundColor: hoveredOption === option ? '#f0f8ff' : 'transparent',
-              fontWeight: selectedOption === option ? 'bold' : 'normal',
-              transition: 'background-color 0.3s, font-weight 0.3s',
-            }}
+            className={`${styles.optionItem} ${
+              hoveredOption === option ? styles.optionItemHovered : ''
+            } ${selectedOption === option ? styles.optionItemSelected : ''}`}
             onMouseEnter={() => handleMouseEnter(option)}
             onMouseLeave={handleMouseLeave}
             onClick={() => handleClick(option)}
@@ -135,22 +138,16 @@ const ScrollableOptions: React.FC<ScrollableOptionsProps> = ({ setIsSelected }) 
             {option}
           </div>
         ))}
+        {optionsLoading && <p>Loading options...</p>}
       </div>
 
-      {(selectedOption || hoveredOption) && (
-        <div
-          style={{
-            marginTop: '1rem',
-            padding: '1rem',
-            border: '1px solid #0070f3',
-            borderRadius: '4px',
-            backgroundColor: '#e6f7ff',
-            color: '#005bb5',
-          }}
-        >
-          <h2>Details for {selectedOption || hoveredOption}</h2>
-          {isLoading ? (
+      {currentOption && (
+        <div className={styles.infoBox}>
+          <h2>Details for {currentOption}</h2>
+          {infoLoading ? (
             <p>Loading...</p>
+          ) : infoError ? (
+            <p className={styles.error}>Error: {infoError}</p>
           ) : (
             <p>{optionInformation}</p>
           )}
