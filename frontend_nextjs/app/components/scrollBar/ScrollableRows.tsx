@@ -1,14 +1,15 @@
-'use client'
+'use client';
 import { useEffect, useState } from 'react';
 
-const ScrollableOptions: React.FC = () => {
+const ScrollableRows: React.FC = () => {
   const [options, setOptions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [optionInformation, setOptionInformation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [infoCache, setInfoCache] = useState<{ [key: string]: string }>({});
-  
+
   useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -16,7 +17,7 @@ const ScrollableOptions: React.FC = () => {
         if (!res.ok) {
           throw new Error(`Failed to fetch, status: ${res.status}`);
         }
-        const data = await res.json(); 
+        const data = await res.json();
         setOptions(data);
       } catch (error: any) {
         setError(error.message);
@@ -26,41 +27,62 @@ const ScrollableOptions: React.FC = () => {
     fetchOptions();
   }, []);
 
-  const handleMouseEnter = async (option: string) => {
-    setHoveredOption(option);
-    
-    if (infoCache[option]) {
-      setOptionInformation(infoCache[option]);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const res = await fetch(`http://localhost:8000/get_table_information_api?database=${option}`);
-      console.log(res)
-      if (!res.ok) {
-        throw new Error(`Failed to fetch information, status: ${res.status}`);
+  useEffect(() => {
+    const fetchInformation = async (option: string) => {
+      if (infoCache[option]) {
+        setOptionInformation(infoCache[option]);
+        return;
       }
-      
-      const description = await res.json(); 
-      
-      setOptionInformation(description);
-      
-      setInfoCache(prevCache => ({
-        ...prevCache,
-        [option]: description,
-      }));
-    } catch (error: any) {
-      setError(error.message);
-      setOptionInformation('Failed to load information.');
-    } finally {
-      setIsLoading(false);
+
+      setIsLoading(true);
+      try {
+        const res = await fetch(`http://localhost:8000/get_table_information_api?database=${option}`);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch information, status: ${res.status}`);
+        }
+
+        const description = await res.json();
+
+        setOptionInformation(description);
+
+        setInfoCache(prevCache => ({
+          ...prevCache,
+          [option]: description,
+        }));
+      } catch (error: any) {
+        setError(error.message);
+        setOptionInformation('Failed to load information.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (selectedOption) {
+      fetchInformation(selectedOption);
+    } else if (hoveredOption) {
+      fetchInformation(hoveredOption);
+    } else {
+      setOptionInformation(null);
+    }
+  }, [hoveredOption, selectedOption, infoCache]);
+
+  const handleMouseEnter = (option: string) => {
+
+    if (!selectedOption) {
+      setHoveredOption(option);
     }
   };
 
   const handleMouseLeave = () => {
-    setHoveredOption(null);
-    setOptionInformation(null);
+    if (!selectedOption) {
+      setHoveredOption(null);
+      setOptionInformation(null);
+    }
+  };
+
+  const handleClick = (option: string) => {
+    setSelectedOption(option);
+    console.log(`Selected option: ${option}`);
   };
 
   return (
@@ -84,18 +106,19 @@ const ScrollableOptions: React.FC = () => {
               padding: '0.5rem',
               cursor: 'pointer',
               backgroundColor: hoveredOption === option ? '#f0f8ff' : 'transparent',
-              transition: 'background-color 0.3s',
+              fontWeight: selectedOption === option ? 'bold' : 'normal', 
+              transition: 'background-color 0.3s, font-weight 0.3s',
             }}
             onMouseEnter={() => handleMouseEnter(option)}
             onMouseLeave={handleMouseLeave}
+            onClick={() => handleClick(option)}
           >
             {option}
           </div>
         ))}
       </div>
 
-      {/* Display additional details when an option is hovered */}
-      {hoveredOption && (
+      {(selectedOption || hoveredOption) && (
         <div
           style={{
             marginTop: '1rem',
@@ -106,7 +129,7 @@ const ScrollableOptions: React.FC = () => {
             color: '#005bb5',
           }}
         >
-          <h2>Details for {hoveredOption}</h2>
+          <h2>Details for {selectedOption || hoveredOption}</h2>
           {isLoading ? (
             <p>Loading...</p>
           ) : (
@@ -118,4 +141,4 @@ const ScrollableOptions: React.FC = () => {
   );
 };
 
-export default ScrollableOptions;
+export default ScrollableRows;
