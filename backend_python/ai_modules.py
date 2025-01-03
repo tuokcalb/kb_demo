@@ -1,7 +1,8 @@
 from openai import OpenAI
 import os
+from key import OPEN_AI_KEY
 
-client = OpenAI(api_key="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")
+client = OPEN_AI_KEY
 
 # Replaces natural language query with SQL query with GPT
 # takes words as input and returns an SQL query to 
